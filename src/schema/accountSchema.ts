@@ -16,7 +16,7 @@ export const accountSchema = z
       .max(100, "Не больше 100 символов")
       .nullable(),
   })
-  .refine((val) => (val.type === "LOCAL" ? val.password === null : true), {
+  .refine((val) => (val.type === "LDAP" ? val.password !== null : true), {
     message: "Пароль обязателен для локальных учетных записей",
     path: ["password"], // path of error
   });
