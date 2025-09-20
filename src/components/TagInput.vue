@@ -24,26 +24,32 @@ const internalValue = ref("");
 
 const emit = defineEmits(["update:modelValue"]);
 
+let isUpdatingFromModel = false;
+
 watch(
   () => modelValue,
   (newValue) => {
-    if (newValue !== null) {
+    isUpdatingFromModel = true;
+    if (newValue && newValue.length > 0) {
       internalValue.value = newValue.map((el) => el.text).join("; ");
     } else {
       internalValue.value = "";
     }
+    isUpdatingFromModel = false;
   },
   { immediate: true },
 );
 
 watch(internalValue, (newValue: string) => {
-  const tagsArray = newValue
-    .split(";")
-    .map((el) => el.trim())
-    .filter(Boolean)
-    .map((el) => ({ text: el }));
+  if (!isUpdatingFromModel) {
+    const tagsArray = newValue
+      .split(";")
+      .map((el) => el.trim())
+      .filter(Boolean)
+      .map((el) => ({ text: el }));
 
-  emit("update:modelValue", tagsArray);
+    emit("update:modelValue", tagsArray);
+  }
 });
 </script>
 

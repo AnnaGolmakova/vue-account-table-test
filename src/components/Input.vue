@@ -16,6 +16,8 @@ const {
   required = false,
 } = defineProps<Props>();
 
+const value = defineModel();
+
 const uniqueId = useId();
 </script>
 
