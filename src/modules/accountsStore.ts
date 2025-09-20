@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import type { Account } from "../types/account";
+
+const LOCALSTORAGE_ID = "accountsStore";
 
 function generateID() {
   return Date.now().toString();
@@ -21,5 +23,29 @@ export const useAccountsStore = defineStore("accounts", () => {
     accounts.value.delete(id);
   }
 
-  return { accounts, createAccount, updateAccount, deleteAccount };
+  function initLocalStorage() {
+    const stored = localStorage.getItem(LOCALSTORAGE_ID);
+    if (stored) {
+      accounts.value = new Map(JSON.parse(stored));
+    }
+
+    watch(
+      accounts,
+      () => {
+        localStorage.setItem(
+          LOCALSTORAGE_ID,
+          JSON.stringify(Array.from(accounts.value.entries())),
+        );
+      },
+      { deep: true },
+    );
+  }
+
+  return {
+    accounts,
+    createAccount,
+    updateAccount,
+    deleteAccount,
+    initLocalStorage,
+  };
 });

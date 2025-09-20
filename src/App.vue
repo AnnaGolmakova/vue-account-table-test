@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import AccountsRow from "./components/AccountsRow.vue";
 import { Plus } from "lucide-vue-next";
 import { useAccountsStore } from "./modules/accountsStore";
@@ -10,6 +10,13 @@ const draftRows = ref<Map<number, null>>(new Map());
 function appendNewRow() {
   draftRows.value.set(Date.now(), null);
 }
+
+onMounted(() => {
+  accountsStore.initLocalStorage();
+  if (accountsStore.accounts.size === 0) {
+    draftRows.value.set(1, null);
+  }
+});
 </script>
 
 <template>
