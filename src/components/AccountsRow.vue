@@ -3,26 +3,29 @@ import Input from "./Input.vue";
 import TagInput from "./TagInput.vue";
 import Select from "./Select.vue";
 
-import { ref, computed } from "vue";
+import { Trash2 } from "lucide-vue-next";
+
+import { ref, computed, onMounted } from "vue";
 import { accountSchema } from "../schema/accountSchema";
+
 import * as z from "zod";
 
 import type { Account } from "../types/account";
+import type { Tag } from "../types/tag";
 
 interface Props {
-  id?: string;
   account?: Account;
 }
 
-const { id, account } = defineProps<Props>();
+const { account } = defineProps<Props>();
+
+const emit = defineEmits(["save", "delete"]);
 
 const errors = ref({ fieldErrors: {} });
-const tags = ref(account?.tags ?? []);
-const type = ref(account?.type ?? "LOCAL");
-const login = ref(account?.login ?? "");
-const password = ref(
-  account?.password ?? (account?.type === "LDAP" ? null : ""),
-);
+const tags = ref<Tag[]>([]);
+const type = ref("LOCAL");
+const login = ref("");
+const password = ref<string | null>("");
 
 const internalAccountData = computed(() => ({
   tags: tags.value,
@@ -34,11 +37,10 @@ const internalAccountData = computed(() => ({
 function validateAndSave() {
   const result = accountSchema.safeParse(internalAccountData.value);
   if (!result.success) {
-    console.error(result.error);
     errors.value = z.flattenError(result.error);
   } else {
-    console.log(result.data);
     errors.value = { fieldErrors: {} };
+    emit("save", result.data);
   }
 }
 
@@ -47,6 +49,15 @@ function submitOnEnter(e: KeyboardEvent) {
     validateAndSave();
   }
 }
+
+onMounted(() => {
+  if (account) {
+    tags.value = account.tags;
+    type.value = account.type;
+    login.value = account.login;
+    password.value = account.password;
+  }
+});
 </script>
 
 <template>
@@ -54,7 +65,7 @@ function submitOnEnter(e: KeyboardEvent) {
     <TagInput
       name="test"
       :maxlength="50"
-      :invalid="errors.fieldErrors.tags"
+      :invalid="errors.fieldErrors.hasOwnProperty('tags')"
       v-model="tags"
       @blur="validateAndSave"
     />
@@ -64,7 +75,7 @@ function submitOnEnter(e: KeyboardEvent) {
       :required="true"
       :values="[
         { value: 'LDAP', label: 'LDAP' },
-        { value: 'LOCAL', label: 'Локальный' },
+        { value: 'LOCAL', label: 'Локальная' },
       ]"
       v-model="type"
       @change="validateAndSave"
@@ -89,6 +100,13 @@ function submitOnEnter(e: KeyboardEvent) {
       @blur="validateAndSave"
       @keyup="submitOnEnter"
     />
+    <button
+      aria-label="Удалить запись"
+      class="delete"
+      @click="() => emit('delete')"
+    >
+      <Trash2 />
+    </button>
   </div>
 </template>
 
@@ -101,5 +119,19 @@ function submitOnEnter(e: KeyboardEvent) {
 
 .doublewidth {
   grid-column: auto / span 2;
+}
+
+.delete {
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
 }
 </style>
